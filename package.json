@@ -1,0 +1,15 @@
+{
+  "name": "modul-ai",
+  "version": "0.3.0",
+  "private": true,
+  "type": "module",
+  "description": "MODUL-AI | Estudio modular 2D/3D con Supabase",
+  "engines": {
+    "node": ">=20 <25"
+  },
+  "scripts": {
+    "check": "node --check dist/modul-core.mjs && node --check dist/modul-studio.mjs && node --check scripts/build.mjs",
+    "test": "node --test tests/modul-core.test.mjs",
+    "build": "npm run check && npm run test && node scripts/build.mjs"
+  }
+}
