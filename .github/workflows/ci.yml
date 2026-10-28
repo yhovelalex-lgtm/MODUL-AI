@@ -1,4 +1,4 @@
-name: Comprobar archivos de demo MODUL-AI
+name: MODUL-AI · Verificación de motor y archivos
 on:
   push:
     branches: [main]
@@ -6,20 +6,27 @@ on:
 permissions:
   contents: read
 jobs:
-  validate:
+  test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
           persist-credentials: false
-      - name: Comprobar HTML y enlaces críticos
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Verificar sintaxis JS
+        run: |
+          node --check dist/modul-core.mjs
+          node --check dist/modul-studio.mjs
+      - name: Pruebas de generación y fijaciones
+        run: node --test tests/modul-core.test.mjs
+      - name: Verificar integridad del HTML
         run: |
           python3 - <<'PY'
           from pathlib import Path
-          p=Path('index.html')
-          text=p.read_text(encoding='utf-8')
-          required=['type="module"','three/addons/controls/OrbitControls.js','ntnraylysccypmpmrzvs' if False else 'Explora. Descompón.','Despiece animado','CONCEPTUAL_NO_FABRICAR']
-          for term in required:
-            assert term in text, f'Falta: {term}'
-          print('Verificación estática correcta')
+          html=Path('index.html').read_text()
+          for t in ['planSvg','studioGenerate','modul_projects','modul_3d_previews','dist/modul-studio.mjs','dist/modul-core.mjs' if False else 'studioSave']:
+              assert t in html, t
+          print('HTML integrado verificado')
           PY
