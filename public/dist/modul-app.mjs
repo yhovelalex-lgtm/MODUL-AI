@@ -27,7 +27,7 @@ let viewer = null;
 let studio = null;
 try {
   const {createViewer} = await import('./modul-3d.mjs');
-  viewer = createViewer($('stage3d'), {onSelect: id => studio?.select(id)});
+  viewer = createViewer($('stage3d'), {onSelect: id => studio?.select(id), onPaint: (id, surface) => { studio?.select(id); studio?.paint(id, surface, $('paintColor').value); }});
 } catch (err) {
   console.error(err);
   const p = document.createElement('p');
@@ -60,7 +60,7 @@ function thumb(input, rooms) {
   s.append(g);
   const add = (attrs) => { const r = document.createElementNS(ns, 'rect'); for (const [k, v] of Object.entries(attrs)) r.setAttribute(k, v); g.append(r); };
   add({x: 0, y: 0, width: input.width, height: input.depth, fill: '#EEF2E9', stroke: '#9AA695', 'stroke-width': 0.12});
-  for (const r of rooms) add({x: r.x, y: r.z, width: r.w, height: r.d, fill: ZONE_FILL[r.type] || ZONE_FILL.other, stroke: '#26313C', 'stroke-width': isHall(r) ? 0.06 : 0.14});
+  for (const r of rooms) add({x: r.x, y: r.z, width: r.w, height: r.d, fill: r.floorColor || ZONE_FILL[r.type] || ZONE_FILL.other, stroke: '#26313C', 'stroke-width': isHall(r) ? 0.06 : 0.14});
   return s;
 }
 
@@ -117,6 +117,9 @@ function renderInspector(state, force = false) {
     if (force || document.activeElement !== inp) inp.value = r ? shown[k] : '';
   }
   $('roomLocked').checked = !!r?.locked;
+  $('lockLabel').textContent = isHall(r) ? 'Fijar durante la edición' : 'Fijar al generar de nuevo';
+  $('windowStyle').value = r?.windowStyle || 'default';
+  for (const id of ['windowStyle', 'paintWalls', 'paintFloor', 'resetPaint']) $(id).disabled = !r;
 }
 
 function renderBill(state) {
@@ -201,6 +204,13 @@ for (const id of ['roomX', 'roomZ', 'roomW', 'roomD']) {
 }
 $('roomLocked').addEventListener('change', e => studio.setLocked(e.target.checked));
 $('unlockAll').addEventListener('click', () => { studio.unlockAll(); toast('Todos los ambientes quedaron libres.'); });
+
+$('windowStyle').addEventListener('change', e => studio.updateRoom({windowStyle: e.target.value}));
+$('paintMode').addEventListener('change', e => viewer?.setOptions({paint: e.target.checked}));
+$('paintMode').disabled = !viewer;
+$('paintWalls').addEventListener('click', () => studio.paint(current.selected, 'wall', $('paintColor').value));
+$('paintFloor').addEventListener('click', () => studio.paint(current.selected, 'floor', $('paintColor').value));
+$('resetPaint').addEventListener('click', () => studio.updateRoom({wallColor: null, floorColor: null}));
 
 // ---------- opciones 3D ----------
 const opt = (id, key) => $(id).addEventListener('change', e => viewer?.setOptions({[key]: e.target.checked}));
