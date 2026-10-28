@@ -44,11 +44,46 @@ footer{margin-top:25px;font-size:11px;color:#88a5aa}
 @media(max-width:1050px){.layout{grid-template-columns:1fr}.side{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.side .card:last-child{grid-column:1/-1}}
 @media(max-width:680px){.topbar{align-items:flex-start}.links{justify-content:flex-end}.links a{font-size:10px}.shell{padding-top:16px}.canvascard{min-height:440px}#stage{height:440px}.side,.bottom{grid-template-columns:1fr}.side .card:last-child{grid-column:auto}.stagefooter small{display:none}}
 .cloud{display:grid;gap:9px}.cloud input{width:100%;border:1px solid #45616a;background:#091c25;color:#f0faf5;border-radius:9px;padding:11px}.cloud .cloud-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.cloud button{border:1px solid #5b827c;background:#244c48;color:#f0faf5;border-radius:9px;padding:10px;font-size:11px;font-weight:750}.cloud-status{color:#b7cecb;font-size:11px;line-height:1.4;min-height:20px}.cloud-list{display:grid;gap:7px;max-height:180px;overflow-y:auto}.cloud-list button{text-align:left}.cloud-list small{display:block;color:#a8c8c2;margin-top:3px}</style>
-</head>
+<style>
+.studio{border:1px solid #386365;background:#112730;border-radius:18px;padding:17px;margin-bottom:20px}.studio-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(250px,.7fr);gap:16px}.studio h2{margin:0 0 12px;font-size:18px}
+.studio-fields{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.studio-fields label,.studio-room label{font-size:11px;color:#bdd9d9;display:grid;gap:5px}
+.studio input{min-width:0;width:100%;background:#0a202a;color:#f0fff5;border:1px solid #46656d;border-radius:8px;padding:9px;font-size:12px}
+.studio-btn{background:#266157;color:#eefcf7;border:1px solid #559a89;border-radius:8px;padding:10px;cursor:pointer;font-size:12px;font-weight:700}
+.studio-buttons{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.studio-plan{background:#071b23;border:1px solid #375660;border-radius:12px;padding:12px;min-height:300px}
+#planSvg{display:block;width:100%;height:380px;touch-action:none}
+.studio-room{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:12px}
+.studio-alts{display:flex;gap:6px;margin-top:9px}.studio-alts button{flex:1}.studio-alts button.active{background:#6be3b8;color:#072521}
+#studioStatus{font-size:12px;color:#93cbb8;line-height:1.5;margin:10px 0}.studio-version{display:block;width:100%;text-align:left;border:1px solid #42675e;border-radius:7px;background:#153a37;color:#e8f7ed;padding:9px;margin:5px 0;cursor:pointer;font-size:11px}
+@media(max-width:850px){.studio-grid{grid-template-columns:1fr}.studio-fields{grid-template-columns:repeat(2,minmax(0,1fr))}#planSvg{height:320px}}@media(max-width:450px){.studio-room{grid-template-columns:repeat(2,minmax(0,1fr))}}
+</style></head>
 <body>
 <header class="topbar"><div class="brand"><span class="brandmark">▦</span><span>MODUL–AI <span class="brandsub">/ LABORATORIO 3D</span></span></div><nav class="links"><a href="https://modul-ai-laboratorio-yhovel.teddymaquera159123.chatgpt.site" target="_blank" rel="noopener">Aplicación original ↗</a><a href="https://github.com/yhovelalex-lgtm/MODUL-AI" target="_blank" rel="noopener">GitHub ↗</a></nav></header>
 <main class="shell"><div class="eyebrow">DISEÑO GENERATIVO · EXPLORACIÓN CONSTRUCTIVA</div>
-<div class="heading"><div><h1>Explora. Descompón.<br>Visualiza cada módulo.</h1><p class="lead">Representación interactiva de vivienda modular con alternativas volumétricas y una primera lectura de piezas para ensamble.</p></div><span class="strap">◈ DEMO INDEPENDIENTE · SIN CONEXIÓN A USUARIOS</span></div>
+<div class="heading"><div><h1>Diseña en 2D.<br>Explora en 3D.</h1><p class="lead">Un único espacio para generar distribuciones conceptuales, editar ambientes, visualizar volúmenes y registrar versiones en tu Supabase.</p></div><span class="strap">◈ ESTUDIO UNIFICADO · PROTOTIPO CONCEPTUAL</span></div>
+<section class="studio" aria-label="Editor generativo unificado">
+<div class="studio-grid">
+<div><div class="overline">01 / DISEÑO PARAMÉTRICO</div><h2>Proyecto y alternativas generativas</h2>
+<div class="studio-fields">
+<label>Nombre<input id="projectName" value="Vivienda modular" maxlength="100"></label>
+<label>Ancho (m)<input id="plotWidth" type="number" min="7.2" max="60" step=".1" value="12"></label>
+<label>Fondo (m)<input id="plotDepth" type="number" min="9.6" max="60" step=".1" value="15"></label>
+<label>Módulo (m)<input id="moduleSize" type="number" min="2.4" max="4.8" step=".1" value="3"></label>
+<label>Dormitorios<input id="bedCount" type="number" min="1" max="6" step="1" value="2"></label>
+<label>Baños<input id="bathCount" type="number" min="1" max="3" step="1" value="1"></label>
+</div>
+<div class="studio-buttons"><button class="studio-btn" id="studioGenerate">✦ Generar 3 alternativas</button><button class="studio-btn" id="studioDemo">↺ Reiniciar ejemplo</button><button class="studio-btn" id="studioUndo">↶ Deshacer</button><button class="studio-btn" id="studioUnlock">Liberar todos</button></div>
+<div class="studio-alts"><button class="studio-btn active" data-studio-alt="A">A · Equilibrio</button><button class="studio-btn" data-studio-alt="B">B · Privacidad</button><button class="studio-btn" data-studio-alt="C">C · Servicios</button></div>
+<p id="studioStatus" role="status">Editor listo. Genera alternativas o arrastra un ambiente.</p>
+<div class="studio-buttons"><button id="studioSave" class="studio-btn">☁ Guardar 2D + 3D</button><button id="studioLoad" class="studio-btn">▤ Mis proyectos</button><button id="studioJson" class="studio-btn">↓ JSON</button><button id="studioSvg" class="studio-btn">↓ Plano SVG</button></div>
+<div id="studioVersions"></div><p class="hint">Para guardar en la nube, inicia sesión en el panel «Mi nube» ubicado debajo del visor. El generador es heurístico, no sustituye una revisión arquitectónica.</p>
+</div>
+<div><div class="overline">02 / PLANTA EN TIEMPO REAL</div><h2>Plano editable · <span id="studioSelected">Sala</span></h2>
+<div class="studio-plan"><svg id="planSvg" aria-label="Plano modular editable por arrastre" role="img"></svg></div>
+<div class="studio-room"><label>X (m)<input type="number" id="roomX" step=".1"></label><label>Y (m)<input type="number" id="roomZ" step=".1"></label><label>Ancho (m)<input type="number" id="roomW" step=".1"></label><label>Fondo (m)<input type="number" id="roomD" step=".1"></label></div>
+<div class="studio-buttons"><button id="studioApply" class="studio-btn">Aplicar cambio</button><label style="display:flex;align-items:center;gap:8px;font-size:12px"><input type="checkbox" id="studioLocked" style="width:18px"> Fijar ambiente</label></div>
+<p class="hint">Arrastra un ambiente o modifica sus medidas. Los cambios se validan en la retícula y se muestran en el 3D. La franja posterior queda reservada para ampliación.</p>
+</div>
+</div></section>
 <div class="layout">
 <section class="canvascard" aria-label="Visor interactivo de vivienda modular 3D"><div id="stage"></div><div class="stagebadge"><span class="dot"></span> MODELO 3D EN TIEMPO REAL</div><div class="stagefooter"><small>↔ Arrastra para orbitar · Rueda para acercar · Haz clic para seleccionar</small><button class="camerabtn" id="reset">↗ Restablecer cámara</button></div></section>
 <aside class="side">
@@ -62,6 +97,7 @@ footer{margin-top:25px;font-size:11px;color:#88a5aa}
 </main>
 <script type="module">
 import * as THREE from 'three';
+import {initStudio} from './dist/modul-studio.mjs';
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.95.0/+esm';
 const supabase=createClient('https://ntnraylysccypmpmrzvs.supabase.co',"sb_publishable_Jj75vcJ8kIZMt5tm3Ldsag_HE3tD3uv",{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false}});
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
@@ -81,7 +117,7 @@ C:[{...base[0],w:4.5},{...base[1],x:4.5,w:4.5},{...base[2],x:9,w:3},{...base[3],
 };
 const palette={social:0x5be5bf,kitchen:0xf5bd70,bedroom:0x87adf4,bath:0xbb99eb,other:0x8edbd0};
 const stage=document.getElementById('stage');
-let renderer,scene,camera,controls,house,parts=[],sprites=[],selected='SAL',active='A',explosion=0;
+let renderer,scene,camera,controls,house,parts=[],sprites=[],selected='SAL',active='A',explosion=0,studio=null;
 const H=2.7;
 const chk=id=>document.getElementById(id).checked;
 const findRoom=()=>sets[active].find(r=>r.id===selected)||sets[active][0];
@@ -110,8 +146,8 @@ for(const r of sets[active]){
 const x=r.x+r.w/2,z=r.z+r.d/2,col=palette[r.type],f=0x193f45;
 const outX=x<6?-1:1,outZ=z<7.5?-1:1;
 add(r,'BASE','Base nominal',[r.w,.2,r.d],[x,.08,z],col,'floor',[outX*1.2,-.3,outZ*1.2]);
-add(r,'N','Panel norte',[r.w,.08,H],[x,H/2,-1e3],f,'wall',[0,1,-1]); // temporary orientation replaced below
-const n=parts[parts.length-1];n.geometry.dispose();n.geometry=new THREE.BoxGeometry(r.w,H,.1);n.position.set(x,H/2,r.z);n.userData.base.copy(n.position);n.userData.dims=[r.w,H,.1];
+add(r,'N','Panel norte',[r.w,H,.1],[x,H/2,r.z],f,'wall',[0,1,-1]);
+
 add(r,'S','Panel sur',[r.w,H,.1],[x,H/2,r.z+r.d],f,'wall',[0,1,1]);
 add(r,'E','Panel este',[.1,H,r.d],[r.x+r.w,H/2,z],f,'wall',[1,1,0]);
 add(r,'O','Panel oeste',[.1,H,r.d],[r.x,H/2,z],f,'wall',[-1,1,0]);
@@ -144,7 +180,7 @@ const right=document.createElement('b');right.textContent=p.userData.label;
 line.append(left,right);el.appendChild(line);
 }
 }
-function setSelected(id){selected=id;applyScene();renderParts();}
+function setSelected(id){selected=id;applyScene();renderParts();studio?.setSelected(id);}
 const cloudStatus=document.getElementById('cloudStatus');
 const cloudList=document.getElementById('cloudList');
 function msg(s){cloudStatus.textContent=s;}
@@ -217,7 +253,7 @@ refreshCloud().catch(()=>msg('No se pudo consultar la sesión.'));
 
 function exportData(type){
 const rows=parts.map(p=>({id:p.userData.partId,ambiente:p.userData.roomId,tipo:p.userData.layer,descripcion:p.userData.label,dimensiones_nominales_m:p.userData.dims.join(' × '),cantidad:1,estado:'CONCEPTUAL_NO_FABRICAR'}));
-const payload={version:'demo-3d-v0.1',alternativa:active,unidades:'m',habitaciones:sets[active],partes:rows,advertencia:'Despiece conceptual sin validez de fabricación: paños compartidos duplicados; sin vanos, materiales, espesores comerciales, conexiones, estructura ni normas'};
+const payload={version:'unified-v0.3',alternativa:active,unidades:'m',habitaciones:sets[active],partes:rows,advertencia:'Despiece conceptual sin validez de fabricación: paños compartidos duplicados; sin vanos, materiales, espesores comerciales, conexiones, estructura ni normas'};
 let content,mime,name;if(type==='json'){content=JSON.stringify(payload,null,2);mime='application/json';name='modul-ai-demo-3d.json';}
 else{const cols=['id','ambiente','tipo','descripcion','dimensiones_nominales_m','cantidad','estado'];const quote=v=>'"'+String(v).replaceAll('"','""')+'"';content='\uFEFF'+cols.join(';')+'\n'+rows.map(r=>cols.map(k=>quote(r[k])).join(';')).join('\n');mime='text/csv;charset=utf-8';name='modul-ai-desglose-conceptual.csv';}
 const url=URL.createObjectURL(new Blob([content],{type:mime}));const a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),2000);
@@ -238,12 +274,12 @@ const outline=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeomet
 const resize=()=>{const w=stage.clientWidth,h=stage.clientHeight;camera.aspect=w/h;camera.updateProjectionMatrix();renderer.setSize(w,h,false);};resize();new ResizeObserver(resize).observe(stage);
 const ray=new THREE.Raycaster(),pointer=new THREE.Vector2();
 renderer.domElement.addEventListener('click',e=>{const rect=renderer.domElement.getBoundingClientRect();pointer.set(((e.clientX-rect.left)/rect.width)*2-1,-((e.clientY-rect.top)/rect.height)*2+1);ray.setFromCamera(pointer,camera);const hit=ray.intersectObjects(parts,false)[0];if(hit)setSelected(hit.object.userData.roomId);});
-document.querySelectorAll('[data-alt]').forEach(b=>b.addEventListener('click',()=>{active=b.dataset.alt;selected='SAL';document.querySelectorAll('[data-alt]').forEach(x=>x.classList.toggle('active',x===b));build();}));
+document.querySelectorAll('[data-alt]').forEach(b=>b.addEventListener('click',()=>{document.querySelector('[data-studio-alt="'+b.dataset.alt+'"]').click();}));
 document.getElementById('explode').addEventListener('input',e=>{explosion=Number(e.target.value)/100;document.getElementById('explosionValue').textContent=e.target.value+'%';applyScene();});
 for(const id of ['roof','walls','labels'])document.getElementById(id).addEventListener('change',applyScene);
 document.getElementById('reset').addEventListener('click',()=>{camera.position.set(22,22,26);controls.target.set(6,0,6.5);controls.update();});
 for(const name of ['csv','json'])document.getElementById(name).addEventListener('click',()=>exportData(name));
-build();
+studio=initStudio({supabase,sets,updated({sets:all,active:chosen,selected:chosenRoom,input}){active=chosen;selected=chosenRoom;build();document.querySelectorAll('[data-alt]').forEach(b=>b.classList.toggle('active',b.dataset.alt===active));},select(id){selected=id;applyScene();renderParts();}});
 let running=true;function frame(){if(!running)return;requestAnimationFrame(frame);controls.autoRotate=chk('spin');controls.autoRotateSpeed=.5;controls.update();renderer.render(scene,camera);}frame();
 document.addEventListener('visibilitychange',()=>{if(document.hidden)renderer.setAnimationLoop(null);});
 }catch(e){console.error(e);stage.textContent='No se pudo iniciar WebGL. Comprueba que el navegador permita aceleración gráfica y acceso al CDN de Three.js.';stage.style.cssText='padding:90px 24px;color:#f9d39a'}
