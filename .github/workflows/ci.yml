@@ -20,6 +20,8 @@ jobs:
         with:
           node-version: '22'
           cache: ''
+      - name: Instalar dependencias
+        run: npm ci --ignore-scripts
       - name: Compilar y probar
         run: npm run build
       - name: Confirmar artefactos
