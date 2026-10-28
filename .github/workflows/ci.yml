@@ -1,0 +1,25 @@
+name: Comprobar archivos de demo MODUL-AI
+on:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Comprobar HTML y enlaces críticos
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          text=p.read_text(encoding='utf-8')
+          required=['type="module"','three/addons/controls/OrbitControls.js','ntnraylysccypmpmrzvs' if False else 'Explora. Descompón.','Despiece animado','CONCEPTUAL_NO_FABRICAR']
+          for term in required:
+            assert term in text, f'Falta: {term}'
+          print('Verificación estática correcta')
+          PY
