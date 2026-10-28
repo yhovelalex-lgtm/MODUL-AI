@@ -43,7 +43,7 @@ input[type=range]{accent-color:#65e6b8;width:100%;cursor:ew-resize}.toggle{displ
 footer{margin-top:25px;font-size:11px;color:#88a5aa}
 @media(max-width:1050px){.layout{grid-template-columns:1fr}.side{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.side .card:last-child{grid-column:1/-1}}
 @media(max-width:680px){.topbar{align-items:flex-start}.links{justify-content:flex-end}.links a{font-size:10px}.shell{padding-top:16px}.canvascard{min-height:440px}#stage{height:440px}.side,.bottom{grid-template-columns:1fr}.side .card:last-child{grid-column:auto}.stagefooter small{display:none}}
-</style>
+.cloud{display:grid;gap:9px}.cloud input{width:100%;border:1px solid #45616a;background:#091c25;color:#f0faf5;border-radius:9px;padding:11px}.cloud .cloud-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.cloud button{border:1px solid #5b827c;background:#244c48;color:#f0faf5;border-radius:9px;padding:10px;font-size:11px;font-weight:750}.cloud-status{color:#b7cecb;font-size:11px;line-height:1.4;min-height:20px}.cloud-list{display:grid;gap:7px;max-height:180px;overflow-y:auto}.cloud-list button{text-align:left}.cloud-list small{display:block;color:#a8c8c2;margin-top:3px}</style>
 </head>
 <body>
 <header class="topbar"><div class="brand"><span class="brandmark">▦</span><span>MODUL–AI <span class="brandsub">/ LABORATORIO 3D</span></span></div><nav class="links"><a href="https://modul-ai-laboratorio-yhovel.teddymaquera159123.chatgpt.site" target="_blank" rel="noopener">Aplicación original ↗</a><a href="https://github.com/yhovelalex-lgtm/MODUL-AI" target="_blank" rel="noopener">GitHub ↗</a></nav></header>
@@ -56,12 +56,14 @@ footer{margin-top:25px;font-size:11px;color:#88a5aa}
 <div class="card"><div class="overline">02 / CONTROLES</div><h2 style="margin-top:8px">Armar y desarmar</h2><div class="control"><div class="controlhead"><label for="explode">Despiece animado</label><output id="explosionValue">0%</output></div><input id="explode" type="range" min="0" max="100" step="1" value="0" aria-label="Separación de piezas"></div><label class="toggle">Mostrar cubiertas <input id="roof" type="checkbox" checked></label><label class="toggle">Mostrar paneles verticales <input id="walls" type="checkbox" checked></label><label class="toggle">Etiquetas de ambientes <input id="labels" type="checkbox" checked></label><label class="toggle">Rotación automática <input id="spin" type="checkbox"></label></div>
 <div class="card"><div class="overline">03 / DESPIECE PRELIMINAR</div><h2 style="margin-top:8px">Piezas del ambiente</h2><div class="selection"><strong id="roomTitle">Sala</strong><small id="roomSize">6 × 3 m · 18 m²</small><p id="roomTip">Haz clic en un ambiente o componente para inspeccionarlo.</p></div><div id="parts" class="parts" aria-live="polite"></div><div class="actiongrid"><button id="csv" class="action">↓ Descargar CSV</button><button id="json" class="action">↓ Descargar JSON</button></div></div>
 <div class="warn"><strong>ATENCIÓN · Prototipo conceptual</strong><div>El despiece no está validado para fabricación ni montaje. Faltan materiales, espesores, vanos, uniones, normativa y cálculo estructural; pueden duplicarse paredes compartidas.</div></div>
-</aside></div>
+<div class="card"><div class="overline">04 / SUPABASE</div><h2 style="margin-top:8px">Mi nube · Guardado privado 3D</h2><p class="hint">Esta demostración usa tu proyecto existente de Supabase. Los diseños guardados son versiones independientes y privadas. El editor original conserva su propio historial.</p><div class="cloud"><input type="email" id="cloudEmail" autocomplete="username" placeholder="Correo electrónico" aria-label="Correo"><input type="password" id="cloudPassword" autocomplete="current-password" placeholder="Contraseña MODUL-AI" aria-label="Contraseña"><div class="cloud-actions"><button id="cloudLogin">Entrar</button><button id="cloudRegister">Crear cuenta</button><button id="cloudSave">Guardar versión 3D</button><button id="cloudLoad">Mis versiones</button></div><button id="cloudLogout">Cerrar sesión</button><div id="cloudStatus" class="cloud-status" aria-live="polite">Sin sesión. Puedes explorar el 3D sin iniciar sesión.</div><div id="cloudList" class="cloud-list"></div></div></div></aside></div>
 <div class="bottom"><div class="card"><h3>01 · Diseñar</h3><p>La distribución real y los bloqueos se siguen editando en la aplicación original MODUL-AI.</p></div><div class="card"><h3>02 · Visualizar en 3D</h3><p>Este visor prepara la integración visual sin modificar el editor 2D ni el motor generativo existente.</p></div><div class="card"><h3>03 · Validar fabricación</h3><p>La próxima etapa exige un sistema constructivo definido y revisión de profesionales competentes.</p></div></div>
 <footer>MODUL-AI · Prototipo visual no constructivo · Datos de ejemplo · Código en GitHub · Supabase permanece como backend de la aplicación original.</footer>
 </main>
 <script type="module">
 import * as THREE from 'three';
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.95.0/+esm';
+const supabase=createClient('https://ntnraylysccypmpmrzvs.supabase.co',"sb_publishable_Jj75vcJ8kIZMt5tm3Ldsag_HE3tD3uv",{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false}});
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 const base=[
 {id:'SAL',name:'Sala',type:'social',x:0,z:0,w:6,d:3},
@@ -143,6 +145,76 @@ line.append(left,right);el.appendChild(line);
 }
 }
 function setSelected(id){selected=id;applyScene();renderParts();}
+const cloudStatus=document.getElementById('cloudStatus');
+const cloudList=document.getElementById('cloudList');
+function msg(s){cloudStatus.textContent=s;}
+async function loggedUser(){const {data,error}=await supabase.auth.getUser();if(error||!data.user)throw new Error('Inicia sesión antes de guardar o cargar.');return data.user;}
+async function refreshCloud(){
+  const {data:{session}}=await supabase.auth.getSession();
+  msg(session?.user?'Sesión activa: '+session.user.email:'Sin sesión. Puedes usar el visor como demostración.');
+}
+async function cloudAuth(action){
+  const email=document.getElementById('cloudEmail').value.trim();
+  const password=document.getElementById('cloudPassword').value;
+  if(!email||!password){msg('Escribe correo y contraseña.');return;}
+  try{
+    const result=action==='register'?await supabase.auth.signUp({email,password}):await supabase.auth.signInWithPassword({email,password});
+    if(result.error)throw result.error;
+    document.getElementById('cloudPassword').value='';
+    if(action==='register'&&!result.data.session){msg('Registro recibido. Revisa la confirmación enviada a tu correo.');return;}
+    await refreshCloud();
+  }catch(e){msg('Autenticación: '+e.message);}
+}
+async function saveCloud(){
+  try{
+    const user=await loggedUser();
+    const roomData=sets[active].map(r=>({...r}));
+    const pieceData=parts.map(p=>({id:p.userData.partId,room_id:p.userData.roomId,description:p.userData.label,layer:p.userData.layer,nominal_dimensions_m:p.userData.dims}));
+    const {error}=await supabase.from('modul_3d_previews').insert({
+      owner_id:user.id,name:'Diseño 3D '+active,
+      schema_version:'0.3-preview',
+      alternative:active,
+      geometry:{plot:{width:12,depth:15},rooms:roomData,source:'demostracion-independiente',unit:'m'},
+      parts:pieceData
+    });
+    if(error)throw error;
+    msg('Versión 3D de prueba guardada en Supabase.');
+    await loadCloud();
+  }catch(e){msg('Guardado: '+e.message);}
+}
+async function loadCloud(){
+  try{
+    await loggedUser();
+    const {data,error}=await supabase.from('modul_3d_previews').select('id,name,alternative,created_at,geometry').order('created_at',{ascending:false}).limit(25);
+    if(error)throw error;cloudList.replaceChildren();
+    if(!data.length){msg('No hay versiones 3D guardadas todavía.');return;}
+    msg(data.length+' versiones privadas disponibles (máximo 25 mostradas).');
+    for(const item of data){
+      const b=document.createElement('button');
+      b.textContent=item.name+' · '+new Date(item.created_at).toLocaleString('es-PE');
+      const small=document.createElement('small');small.textContent='Ver versión '+item.alternative+' (demo)';
+      b.appendChild(small);
+      b.addEventListener('click',()=>{
+        const incoming=item.geometry?.rooms;
+        if(!Array.isArray(incoming)||incoming.length<1||incoming.length>40||incoming.some(r=>!Number.isFinite(r.x)||!Number.isFinite(r.z)||!Number.isFinite(r.w)||!Number.isFinite(r.d)||r.w<=0||r.d<=0)){msg('Esta geometría no es compatible con el visor de demostración.');return;}
+        // Restore as the saved 3D preview, without modifying the original editor.
+        sets[item.alternative]=incoming.map(r=>({...r}));
+        active=item.alternative;selected=incoming[0].id;
+        document.querySelectorAll('[data-alt]').forEach(btn=>btn.classList.toggle('active',btn.dataset.alt===active));
+        build();msg('Vista 3D recuperada. El editor original no fue modificado.');
+      });
+      cloudList.appendChild(b);
+    }
+  }catch(e){msg('Lectura: '+e.message);}
+}
+document.getElementById('cloudLogin').addEventListener('click',()=>cloudAuth('login'));
+document.getElementById('cloudRegister').addEventListener('click',()=>cloudAuth('register'));
+document.getElementById('cloudSave').addEventListener('click',saveCloud);
+document.getElementById('cloudLoad').addEventListener('click',loadCloud);
+document.getElementById('cloudLogout').addEventListener('click',async()=>{const {error}=await supabase.auth.signOut();cloudList.replaceChildren();msg(error?error.message:'Sesión cerrada.');});
+supabase.auth.onAuthStateChange(()=>{setTimeout(()=>refreshCloud().catch(()=>{}),0);});
+refreshCloud().catch(()=>msg('No se pudo consultar la sesión.'));
+
 function exportData(type){
 const rows=parts.map(p=>({id:p.userData.partId,ambiente:p.userData.roomId,tipo:p.userData.layer,descripcion:p.userData.label,dimensiones_nominales_m:p.userData.dims.join(' × '),cantidad:1,estado:'CONCEPTUAL_NO_FABRICAR'}));
 const payload={version:'demo-3d-v0.1',alternativa:active,unidades:'m',habitaciones:sets[active],partes:rows,advertencia:'Despiece conceptual sin validez de fabricación: paños compartidos duplicados; sin vanos, materiales, espesores comerciales, conexiones, estructura ni normas'};
