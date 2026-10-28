@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#101c25">
+<title>MODUL-AI | Explorador 3D de sistemas modulares</title>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"}}</script>
+<style>
+:root{color-scheme:dark;--bg:#0b151b;--box:#12242c;--line:#28404a;--mint:#68e2ba;--white:#f2f8f7;--muted:#94b0b9}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--white);font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
+body:before{content:"";position:fixed;inset:0;z-index:-1;background:radial-gradient(circle at 20% -10%,#264d48 0,transparent 43%),radial-gradient(circle at 90% 80%,#17293e 0,transparent 40%)}
+button,input{font:inherit}button{cursor:pointer}a{color:inherit;text-decoration:none}.topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px clamp(15px,3vw,46px);border-bottom:1px solid #ffffff13}
+.brand{display:flex;align-items:center;gap:11px;font-size:19px;letter-spacing:.02em;font-weight:850}.brandmark{display:grid;place-items:center;width:39px;height:39px;border:1px solid #7be8c3;border-radius:11px;background:linear-gradient(140deg,#4cbd99,#173c3c);box-shadow:0 0 23px #3ad7ac30}
+.brandsub{font-size:10px;letter-spacing:.17em;color:#87bcb2;font-weight:650}.links{display:flex;gap:9px;flex-wrap:wrap}
+.links a{border:1px solid var(--line);padding:9px 12px;border-radius:9px;font-size:12px;color:#d0e8e7}.links a:hover{border-color:var(--mint)}
+.shell{max-width:1660px;margin:0 auto;padding:25px clamp(15px,3vw,46px)}
+.eyebrow{font-size:11px;letter-spacing:.21em;font-weight:800;color:var(--mint)}.heading{display:flex;justify-content:space-between;align-items:end;gap:22px;margin:12px 0 23px;flex-wrap:wrap}
+h1{font-weight:780;font-size:clamp(27px,3.1vw,51px);letter-spacing:-.045em;margin:5px 0 8px;line-height:1.08}.lead{color:var(--muted);margin:0;max-width:650px;font-size:14px;line-height:1.6}
+.strap{font-size:11px;color:#efcb7c;border:1px solid #92783a70;padding:10px 13px;border-radius:99px;background:#9c722016}
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 365px;gap:17px}.canvascard{border:1px solid #39535b;background:linear-gradient(155deg,#1c3741 0%,#0e1d27 67%);border-radius:22px;overflow:hidden;position:relative;min-height:620px}
+#stage{height:620px;width:100%;touch-action:none}.stagebadge{position:absolute;left:21px;top:19px;display:flex;align-items:center;gap:9px;font-size:11px;letter-spacing:.12em;color:#d8f9eb;background:#07171dc9;border:1px solid #497c72;padding:10px 12px;border-radius:9px;pointer-events:none}
+.dot{width:7px;height:7px;background:#75efbd;border-radius:50%;box-shadow:0 0 13px #75efbd}
+.stagefooter{position:absolute;bottom:18px;left:20px;right:20px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.stagefooter small{font-size:11px;color:#b0d4d4;background:#0b1c24aa;padding:9px;border-radius:8px}
+.camerabtn{background:#d2ffe9;color:#12302c;border:0;border-radius:9px;padding:10px 13px;font-size:11px;font-weight:800}
+.card{background:#14252e;border:1px solid #28424c;border-radius:19px;padding:19px}.side{display:flex;flex-direction:column;gap:13px}
+.card h2{font-size:15px;margin:0 0 15px}.hint{font-size:12px;color:var(--muted);line-height:1.6}.overline{color:#75dabc;font-size:10px;letter-spacing:.17em;font-weight:850}
+.alternatives{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:11px}
+.alt{padding:12px 9px;background:#1b343d;border:1px solid #3e565d;color:#a7c5c8;border-radius:10px;font-weight:850;text-align:center}.alt.active{background:linear-gradient(145deg,#62e5b6,#4cae9b);color:#092a26;border-color:#96ffce}
+.alt span{display:block;font-size:9px;font-weight:500;opacity:.82;margin-top:3px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:15px}
+.stat{border:1px solid #304d56;border-radius:11px;padding:11px 6px;text-align:center;background:#0e2229}.stat strong{display:block;font-size:19px;font-weight:850}.stat span{display:block;font-size:10px;color:#99b9c0;margin-top:3px}
+.control{margin-top:17px}.controlhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:11px;font-size:12px;font-weight:760}
+input[type=range]{accent-color:#65e6b8;width:100%;cursor:ew-resize}.toggle{display:flex;align-items:center;justify-content:space-between;color:#c8dedf;font-size:12px;margin-top:12px}
+.toggle input{accent-color:#68e2ba;width:17px;height:17px}
+.selection{padding:13px;border:1px solid #3c655f;border-radius:13px;background:#1b3639;margin-top:10px}
+.selection strong{display:block;font-size:16px;margin-bottom:4px}.selection small{color:#acd1cc}.selection p{font-size:11px;color:#a3c5c2;margin:8px 0 0}
+.parts{margin-top:13px;display:grid;gap:6px}.part{display:flex;justify-content:space-between;gap:9px;border-bottom:1px solid #ffffff14;padding:8px 0;font-size:11px;color:#bcd4d3}.part b{color:#edfbf7;font-weight:650;text-align:right}
+.actiongrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:15px}.action{border:1px solid #5b827c;background:#213d42;border-radius:9px;color:#e1fbf2;padding:11px 10px;font-size:11px;font-weight:780}
+.action:hover{background:#2b5559}.warn{color:#dbbd8e;border:1px solid #775f3e;background:#5d492122;border-radius:12px;padding:12px;font-size:11px;line-height:1.5}
+.bottom{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:15px}
+.bottom .card h3{margin:0 0 7px;font-size:13px}.bottom .card p{margin:0;color:#9cb4bc;font-size:11px;line-height:1.6}
+footer{margin-top:25px;font-size:11px;color:#88a5aa}
+@media(max-width:1050px){.layout{grid-template-columns:1fr}.side{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.side .card:last-child{grid-column:1/-1}}
+@media(max-width:680px){.topbar{align-items:flex-start}.links{justify-content:flex-end}.links a{font-size:10px}.shell{padding-top:16px}.canvascard{min-height:440px}#stage{height:440px}.side,.bottom{grid-template-columns:1fr}.side .card:last-child{grid-column:auto}.stagefooter small{display:none}}
+</style>
+</head>
+<body>
+<header class="topbar"><div class="brand"><span class="brandmark">▦</span><span>MODUL–AI <span class="brandsub">/ LABORATORIO 3D</span></span></div><nav class="links"><a href="https://modul-ai-laboratorio-yhovel.teddymaquera159123.chatgpt.site" target="_blank" rel="noopener">Aplicación original ↗</a><a href="https://github.com/yhovelalex-lgtm/MODUL-AI" target="_blank" rel="noopener">GitHub ↗</a></nav></header>
+<main class="shell"><div class="eyebrow">DISEÑO GENERATIVO · EXPLORACIÓN CONSTRUCTIVA</div>
+<div class="heading"><div><h1>Explora. Descompón.<br>Visualiza cada módulo.</h1><p class="lead">Representación interactiva de vivienda modular con alternativas volumétricas y una primera lectura de piezas para ensamble.</p></div><span class="strap">◈ DEMO INDEPENDIENTE · SIN CONEXIÓN A USUARIOS</span></div>
+<div class="layout">
+<section class="canvascard" aria-label="Visor interactivo de vivienda modular 3D"><div id="stage"></div><div class="stagebadge"><span class="dot"></span> MODELO 3D EN TIEMPO REAL</div><div class="stagefooter"><small>↔ Arrastra para orbitar · Rueda para acercar · Haz clic para seleccionar</small><button class="camerabtn" id="reset">↗ Restablecer cámara</button></div></section>
+<aside class="side">
+<div class="card"><div class="overline">01 / EXPLORADOR</div><h2 style="margin-top:8px">Configuraciones generativas</h2><div class="hint">Distribuciones ficticias de referencia. No son resultados del solver de la app original.</div><div class="alternatives" role="group" aria-label="Elegir alternativa"><button class="alt active" data-alt="A">A<span>Equilibrio</span></button><button class="alt" data-alt="B">B<span>Privacidad</span></button><button class="alt" data-alt="C">C<span>Flexible</span></button></div><div class="stats"><div class="stat"><strong>12×15</strong><span>Lote (m)</span></div><div class="stat"><strong id="roomCount">7</strong><span>Ambientes</span></div><div class="stat"><strong id="pieceCount">42</strong><span>Piezas brutas</span></div></div></div>
+<div class="card"><div class="overline">02 / CONTROLES</div><h2 style="margin-top:8px">Armar y desarmar</h2><div class="control"><div class="controlhead"><label for="explode">Despiece animado</label><output id="explosionValue">0%</output></div><input id="explode" type="range" min="0" max="100" step="1" value="0" aria-label="Separación de piezas"></div><label class="toggle">Mostrar cubiertas <input id="roof" type="checkbox" checked></label><label class="toggle">Mostrar paneles verticales <input id="walls" type="checkbox" checked></label><label class="toggle">Etiquetas de ambientes <input id="labels" type="checkbox" checked></label><label class="toggle">Rotación automática <input id="spin" type="checkbox"></label></div>
+<div class="card"><div class="overline">03 / DESPIECE PRELIMINAR</div><h2 style="margin-top:8px">Piezas del ambiente</h2><div class="selection"><strong id="roomTitle">Sala</strong><small id="roomSize">6 × 3 m · 18 m²</small><p id="roomTip">Haz clic en un ambiente o componente para inspeccionarlo.</p></div><div id="parts" class="parts" aria-live="polite"></div><div class="actiongrid"><button id="csv" class="action">↓ Descargar CSV</button><button id="json" class="action">↓ Descargar JSON</button></div></div>
+<div class="warn"><strong>ATENCIÓN · Prototipo conceptual</strong><div>El despiece no está validado para fabricación ni montaje. Faltan materiales, espesores, vanos, uniones, normativa y cálculo estructural; pueden duplicarse paredes compartidas.</div></div>
+</aside></div>
+<div class="bottom"><div class="card"><h3>01 · Diseñar</h3><p>La distribución real y los bloqueos se siguen editando en la aplicación original MODUL-AI.</p></div><div class="card"><h3>02 · Visualizar en 3D</h3><p>Este visor prepara la integración visual sin modificar el editor 2D ni el motor generativo existente.</p></div><div class="card"><h3>03 · Validar fabricación</h3><p>La próxima etapa exige un sistema constructivo definido y revisión de profesionales competentes.</p></div></div>
+<footer>MODUL-AI · Prototipo visual no constructivo · Datos de ejemplo · Código en GitHub · Supabase permanece como backend de la aplicación original.</footer>
+</main>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+const base=[
+{id:'SAL',name:'Sala',type:'social',x:0,z:0,w:6,d:3},
+{id:'COM',name:'Comedor',type:'social',x:6,z:0,w:3,d:3},
+{id:'COC',name:'Cocina',type:'kitchen',x:9,z:0,w:3,d:3},
+{id:'D01',name:'Dormitorio 01',type:'bedroom',x:0,z:3,w:3,d:4.5},
+{id:'D02',name:'Dormitorio 02',type:'bedroom',x:3,z:3,w:3,d:4.5},
+{id:'BAN',name:'Baño',type:'bath',x:6,z:3,w:3,d:3},
+{id:'EST',name:'Estudio',type:'other',x:9,z:3,w:3,d:4.5}
+];
+const sets={
+A:base,
+B:[{...base[0],w:4.5},{...base[1],x:4.5,w:3},{...base[2],x:7.5,w:4.5},...base.slice(3)],
+C:[{...base[0],w:4.5},{...base[1],x:4.5,w:4.5},{...base[2],x:9,w:3},{...base[3],w:4.5},{...base[4],x:4.5,w:4.5},{...base[5],x:9,w:3},{...base[6],x:9,z:6,w:3,d:3}]
+};
+const palette={social:0x5be5bf,kitchen:0xf5bd70,bedroom:0x87adf4,bath:0xbb99eb,other:0x8edbd0};
+const stage=document.getElementById('stage');
+let renderer,scene,camera,controls,house,parts=[],sprites=[],selected='SAL',active='A',explosion=0;
+const H=2.7;
+const chk=id=>document.getElementById(id).checked;
+const findRoom=()=>sets[active].find(r=>r.id===selected)||sets[active][0];
+function makeLabel(label){
+const canvas=document.createElement('canvas');canvas.width=512;canvas.height=100;
+const c=canvas.getContext('2d');c.fillStyle='#0e2934';c.beginPath();c.roundRect(4,3,504,94,23);c.fill();
+c.strokeStyle='#8bdfcc';c.lineWidth=3;c.stroke();c.fillStyle='#f3fffc';c.font='bold 32px system-ui';c.textAlign='center';c.textBaseline='middle';c.fillText(label,256,50,470);
+const tex=new THREE.CanvasTexture(canvas);const mat=new THREE.SpriteMaterial({map:tex,depthTest:false});
+const sp=new THREE.Sprite(mat);sp.scale.set(2.7,.53,1);return sp;
+}
+function add(room,code,label,dims,pos,color,layer,dir){
+const g=new THREE.BoxGeometry(...dims);
+const m=new THREE.MeshStandardMaterial({color,roughness:.58,metalness:.12,transparent:layer!=='floor',opacity:layer==='roof'?.4:layer==='wall'?.46:1,side:THREE.DoubleSide,emissive:0x000000});
+const mesh=new THREE.Mesh(g,m);mesh.position.set(...pos);mesh.castShadow=layer!=='roof';mesh.receiveShadow=true;
+mesh.userData={roomId:room.id,partId:room.id+'-'+code,label,layer,base:mesh.position.clone(),dir:new THREE.Vector3(...dir),dims};
+house.add(mesh);const edges=new THREE.LineSegments(new THREE.EdgesGeometry(g),new THREE.LineBasicMaterial({color:0x0f3137,transparent:true,opacity:.4}));mesh.add(edges);parts.push(mesh);
+}
+function clearHouse(){
+if(!house)return;
+house.traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.material){const mats=Array.isArray(o.material)?o.material:[o.material];for(const m of mats){if(m.map)m.map.dispose();m.dispose();}}});
+scene.remove(house);parts=[];sprites=[];
+}
+function build(){
+clearHouse();house=new THREE.Group();scene.add(house);
+for(const r of sets[active]){
+const x=r.x+r.w/2,z=r.z+r.d/2,col=palette[r.type],f=0x193f45;
+const outX=x<6?-1:1,outZ=z<7.5?-1:1;
+add(r,'BASE','Base nominal',[r.w,.2,r.d],[x,.08,z],col,'floor',[outX*1.2,-.3,outZ*1.2]);
+add(r,'N','Panel norte',[r.w,.08,H],[x,H/2,-1e3],f,'wall',[0,1,-1]); // temporary orientation replaced below
+const n=parts[parts.length-1];n.geometry.dispose();n.geometry=new THREE.BoxGeometry(r.w,H,.1);n.position.set(x,H/2,r.z);n.userData.base.copy(n.position);n.userData.dims=[r.w,H,.1];
+add(r,'S','Panel sur',[r.w,H,.1],[x,H/2,r.z+r.d],f,'wall',[0,1,1]);
+add(r,'E','Panel este',[.1,H,r.d],[r.x+r.w,H/2,z],f,'wall',[1,1,0]);
+add(r,'O','Panel oeste',[.1,H,r.d],[r.x,H/2,z],f,'wall',[-1,1,0]);
+add(r,'CUB','Cubierta nominal',[r.w,.13,r.d],[x,H+.08,z],0xc6e6db,'roof',[outX*2.2,3.4,outZ*2.2]);
+const sp=makeLabel(r.name);sp.position.set(x,H+.72,z);house.add(sp);sprites.push(sp);
+}
+applyScene();renderParts();
+document.getElementById('roomCount').textContent=sets[active].length;
+document.getElementById('pieceCount').textContent=parts.length;
+}
+function applyScene(){
+for(const m of parts){
+const u=m.userData,t=explosion;
+m.position.copy(u.base).addScaledVector(u.dir,t*2.25);
+m.visible=u.layer==='roof'?chk('roof'):u.layer==='wall'?chk('walls'):true;
+m.material.emissive.setHex(u.roomId===selected?0x25504c:0x000000);
+m.material.emissiveIntensity=u.roomId===selected?.23:0;
+}
+sprites.forEach(s=>s.visible=chk('labels')&&explosion<.5);
+}
+function renderParts(){
+const r=findRoom();
+document.getElementById('roomTitle').textContent=r.name;
+document.getElementById('roomSize').textContent=r.w+' × '+r.d+' m · '+(r.w*r.d).toFixed(2)+' m²';
+const el=document.getElementById('parts');el.replaceChildren();
+for(const p of parts.filter(x=>x.userData.roomId===r.id)){
+const line=document.createElement('div');line.className='part';
+const left=document.createElement('span');left.textContent=p.userData.partId;
+const right=document.createElement('b');right.textContent=p.userData.label;
+line.append(left,right);el.appendChild(line);
+}
+}
+function setSelected(id){selected=id;applyScene();renderParts();}
+function exportData(type){
+const rows=parts.map(p=>({id:p.userData.partId,ambiente:p.userData.roomId,tipo:p.userData.layer,descripcion:p.userData.label,dimensiones_nominales_m:p.userData.dims.join(' × '),cantidad:1,estado:'CONCEPTUAL_NO_FABRICAR'}));
+const payload={version:'demo-3d-v0.1',alternativa:active,unidades:'m',habitaciones:sets[active],partes:rows,advertencia:'Despiece conceptual sin validez de fabricación: paños compartidos duplicados; sin vanos, materiales, espesores comerciales, conexiones, estructura ni normas'};
+let content,mime,name;if(type==='json'){content=JSON.stringify(payload,null,2);mime='application/json';name='modul-ai-demo-3d.json';}
+else{const cols=['id','ambiente','tipo','descripcion','dimensiones_nominales_m','cantidad','estado'];const quote=v=>'"'+String(v).replaceAll('"','""')+'"';content='\uFEFF'+cols.join(';')+'\n'+rows.map(r=>cols.map(k=>quote(r[k])).join(';')).join('\n');mime='text/csv;charset=utf-8';name='modul-ai-desglose-conceptual.csv';}
+const url=URL.createObjectURL(new Blob([content],{type:mime}));const a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),2000);
+}
+try{
+renderer=new THREE.WebGLRenderer({antialias:true,alpha:true,powerPreference:'high-performance'});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.shadowMap.enabled=true;renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;
+stage.appendChild(renderer.domElement);
+scene=new THREE.Scene();scene.fog=new THREE.FogExp2(0x163039,.014);
+camera=new THREE.PerspectiveCamera(43,1,.1,180);camera.position.set(22,22,26);
+controls=new OrbitControls(camera,renderer.domElement);controls.target.set(6,0,6.5);controls.enableDamping=true;controls.dampingFactor=.08;controls.maxPolarAngle=Math.PI/2.06;controls.minDistance=9;controls.maxDistance=55;controls.update();
+scene.add(new THREE.HemisphereLight(0xb7e4e7,0x182735,2.2));
+const key=new THREE.DirectionalLight(0xfff1d4,3.2);key.position.set(-9,25,11);key.castShadow=true;key.shadow.mapSize.set(2048,2048);key.shadow.camera.left=-20;key.shadow.camera.right=25;key.shadow.camera.top=25;key.shadow.camera.bottom=-20;scene.add(key);
+const accent=new THREE.PointLight(0x62ddb3,70);accent.position.set(13,7,-4);scene.add(accent);
+const ground=new THREE.Mesh(new THREE.PlaneGeometry(70,70),new THREE.MeshStandardMaterial({color:0x142c35,roughness:.9,metalness:.13}));ground.rotation.x=-Math.PI/2;ground.position.y=-.2;ground.receiveShadow=true;scene.add(ground);
+const grid=new THREE.GridHelper(60,60,0x477b79,0x29494e);grid.position.y=-.18;grid.material.opacity=.36;grid.material.transparent=true;scene.add(grid);
+const outline=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(12,.1,15)),new THREE.LineBasicMaterial({color:0x7be8bc}));outline.position.set(6,-.09,7.5);scene.add(outline);
+const resize=()=>{const w=stage.clientWidth,h=stage.clientHeight;camera.aspect=w/h;camera.updateProjectionMatrix();renderer.setSize(w,h,false);};resize();new ResizeObserver(resize).observe(stage);
+const ray=new THREE.Raycaster(),pointer=new THREE.Vector2();
+renderer.domElement.addEventListener('click',e=>{const rect=renderer.domElement.getBoundingClientRect();pointer.set(((e.clientX-rect.left)/rect.width)*2-1,-((e.clientY-rect.top)/rect.height)*2+1);ray.setFromCamera(pointer,camera);const hit=ray.intersectObjects(parts,false)[0];if(hit)setSelected(hit.object.userData.roomId);});
+document.querySelectorAll('[data-alt]').forEach(b=>b.addEventListener('click',()=>{active=b.dataset.alt;selected='SAL';document.querySelectorAll('[data-alt]').forEach(x=>x.classList.toggle('active',x===b));build();}));
+document.getElementById('explode').addEventListener('input',e=>{explosion=Number(e.target.value)/100;document.getElementById('explosionValue').textContent=e.target.value+'%';applyScene();});
+for(const id of ['roof','walls','labels'])document.getElementById(id).addEventListener('change',applyScene);
+document.getElementById('reset').addEventListener('click',()=>{camera.position.set(22,22,26);controls.target.set(6,0,6.5);controls.update();});
+for(const name of ['csv','json'])document.getElementById(name).addEventListener('click',()=>exportData(name));
+build();
+let running=true;function frame(){if(!running)return;requestAnimationFrame(frame);controls.autoRotate=chk('spin');controls.autoRotateSpeed=.5;controls.update();renderer.render(scene,camera);}frame();
+document.addEventListener('visibilitychange',()=>{if(document.hidden)renderer.setAnimationLoop(null);});
+}catch(e){console.error(e);stage.textContent='No se pudo iniciar WebGL. Comprueba que el navegador permita aceleración gráfica y acceso al CDN de Three.js.';stage.style.cssText='padding:90px 24px;color:#f9d39a'}
+</script></body></html>
