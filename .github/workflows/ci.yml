@@ -1,12 +1,16 @@
-name: MODUL-AI · Verificación de motor y archivos
+name: MODUL-AI | CI y build Vercel
 on:
   push:
     branches: [main]
   pull_request:
 permissions:
   contents: read
+concurrency:
+  group: modul-ai-ci-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
-  test:
+  validate:
+    name: Pruebas y compilación estática
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
@@ -15,18 +19,13 @@ jobs:
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: '22'
-      - name: Verificar sintaxis JS
+          cache: ''
+      - name: Compilar y probar
+        run: npm run build
+      - name: Confirmar artefactos
         run: |
-          node --check dist/modul-core.mjs
-          node --check dist/modul-studio.mjs
-      - name: Pruebas de generación y fijaciones
-        run: node --test tests/modul-core.test.mjs
-      - name: Verificar integridad del HTML
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          html=Path('index.html').read_text()
-          for t in ['planSvg','studioGenerate','modul_projects','modul_3d_previews','dist/modul-studio.mjs','dist/modul-core.mjs' if False else 'studioSave']:
-              assert t in html, t
-          print('HTML integrado verificado')
-          PY
+          test -s public/index.html
+          test -s public/dist/modul-core.mjs
+          test -s public/dist/modul-studio.mjs
+      - name: Resumen
+        run: echo 'MODUL-AI build y pruebas ejecutadas. Vercel despliega a través de Git Integration.'
