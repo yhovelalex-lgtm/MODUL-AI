@@ -1,7 +1,9 @@
 node_modules/
-public/
-.vercel/
+data/
+*.exe
+modul-ai-linux
 .env
 .env.*
-!.env.example
 .DS_Store
+
+.vercel/

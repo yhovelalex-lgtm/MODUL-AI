@@ -1,15 +1,22 @@
 {
   "name": "modul-ai",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "private": true,
   "type": "module",
-  "description": "MODUL-AI | Estudio modular 2D/3D con Supabase",
+  "description": "MODUL-AI | Estudio modular 2D/3D con servidor propio y base SQLite (PC local o cualquier VPS)",
   "engines": {
-    "node": ">=20 <25"
+    "node": "22.x"
   },
   "scripts": {
-    "check": "node --check dist/modul-core.mjs && node --check dist/modul-studio.mjs && node --check scripts/build.mjs",
-    "test": "node --test tests/modul-core.test.mjs",
-    "build": "npm run check && npm run test && node scripts/build.mjs"
+    "start": "node --no-warnings=ExperimentalWarning server/server.mjs",
+    "open": "node --no-warnings=ExperimentalWarning server/server.mjs --open",
+    "check": "node --check server/server.mjs && node --check public/dist/modul-core.mjs && node --check public/dist/modul-studio.mjs && node --check public/dist/modul-api.mjs",
+    "test": "node --no-warnings=ExperimentalWarning --test tests/*.test.mjs",
+    "exe": "npx --yes bun@1.2.23 build --compile --minify --target=bun-windows-x64 server/server.mjs --outfile MODUL-AI.exe",
+    "exe:linux": "npx --yes bun@1.2.23 build --compile --minify --target=bun-linux-x64 server/server.mjs --outfile modul-ai-linux",
+    "build": "npm run check && npm test"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "2.118.0"
   }
 }

@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#E9EDF1">
+<title>MODUL-AI · Estudio de vivienda modular</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preload" href="/fonts/archivo-latin-standard-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/css/app.css">
+<script type="importmap">{"imports":{"three":"./vendor/three/three.module.min.js","three/addons/":"./vendor/three/addons/"}}</script>
+</head>
+<body>
+<header class="bar">
+  <a class="brand" href="/" aria-label="MODUL-AI, inicio">
+    <svg viewBox="0 0 32 32" aria-hidden="true"><rect x="2" y="2" width="28" height="28" rx="3" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M2 13h17M19 2v28M19 21h11" stroke="currentColor" stroke-width="2.4" fill="none"/><rect x="21.5" y="4.5" width="6" height="6" fill="#F2B705"/></svg>
+    <span>MODUL<span class="brand-ai">AI</span></span>
+  </a>
+  <label class="project-name">
+    <span class="sr-only">Nombre del proyecto</span>
+    <input id="projectName" maxlength="100" autocomplete="off" spellcheck="false">
+  </label>
+  <div class="bar-tools">
+    <div class="btn-group" role="group" aria-label="Historial">
+      <button class="icon-btn" id="undo" title="Deshacer (Ctrl+Z)" aria-label="Deshacer" disabled><svg viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg></button>
+      <button class="icon-btn" id="redo" title="Rehacer (Ctrl+Y)" aria-label="Rehacer" disabled><svg viewBox="0 0 24 24"><path d="m15 14 5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/></svg></button>
+    </div>
+    <div class="menu">
+      <button class="btn" id="exportBtn" aria-haspopup="menu" aria-expanded="false" aria-controls="exportMenu">Exportar<svg viewBox="0 0 24 24" class="chev"><path d="m6 9 6 6 6-6"/></svg></button>
+      <div class="menu-list" id="exportMenu" role="menu" hidden>
+        <button role="menuitem" data-export="svg">Plano 2D <small>SVG</small></button>
+        <button role="menuitem" data-export="png">Imagen 3D <small>PNG</small></button>
+        <button role="menuitem" data-export="csv">Despiece <small>CSV</small></button>
+        <button role="menuitem" data-export="json">Proyecto <small>JSON</small></button>
+      </div>
+    </div>
+    <button class="btn" id="openProjects">Mis proyectos</button>
+    <button class="btn btn-primary" id="saveProject">Guardar</button>
+    <button class="btn btn-account" id="accountBtn" aria-haspopup="dialog">Entrar</button>
+  </div>
+</header>
+
+<main class="workspace">
+  <aside class="panel panel-program" aria-label="Terreno y programa">
+    <form id="programForm" novalidate>
+      <fieldset>
+        <legend>Terreno</legend>
+        <div class="field-row">
+          <label class="field"><span>Frente</span><span class="unit"><input id="plotWidth" type="number" min="7.2" max="60" step="0.1" inputmode="decimal"><i>m</i></span></label>
+          <label class="field"><span>Fondo</span><span class="unit"><input id="plotDepth" type="number" min="9.6" max="60" step="0.1" inputmode="decimal"><i>m</i></span></label>
+        </div>
+        <label class="field"><span>Módulo constructivo</span><span class="unit"><input id="moduleSize" type="number" min="2.4" max="4.8" step="0.1" inputmode="decimal"><i>m</i></span></label>
+      </fieldset>
+      <fieldset>
+        <legend>Programa</legend>
+        <div class="stepper-field"><span id="bedLabel">Dormitorios</span>
+          <div class="stepper" role="group" aria-labelledby="bedLabel"><button type="button" data-step="bedCount:-1" aria-label="Quitar dormitorio">−</button><input id="bedCount" type="number" min="1" max="6" step="1" aria-labelledby="bedLabel"><button type="button" data-step="bedCount:1" aria-label="Agregar dormitorio">+</button></div>
+        </div>
+        <div class="stepper-field"><span id="bathLabel">Baños</span>
+          <div class="stepper" role="group" aria-labelledby="bathLabel"><button type="button" data-step="bathCount:-1" aria-label="Quitar baño">−</button><input id="bathCount" type="number" min="1" max="3" step="1" aria-labelledby="bathLabel"><button type="button" data-step="bathCount:1" aria-label="Agregar baño">+</button></div>
+        </div>
+        <p class="note">Sala, comedor y cocina siempre se incluyen.</p>
+      </fieldset>
+      <button class="btn btn-primary btn-block" id="generate" type="submit">Generar alternativas</button>
+      <button class="link-btn" id="resetDemo" type="button">Volver al ejemplo</button>
+    </form>
+    <section class="alts" aria-labelledby="altTitle">
+      <h2 id="altTitle">Alternativas</h2>
+      <div id="altList" class="alt-list" role="radiogroup" aria-labelledby="altTitle"></div>
+    </section>
+  </aside>
+
+  <section class="stage" aria-label="Plano y modelo">
+    <div class="stage-bar">
+      <div class="segmented" role="radiogroup" aria-label="Vista">
+        <button role="radio" data-view="plan" aria-checked="false">Plano</button>
+        <button role="radio" data-view="split" aria-checked="true" class="only-wide">Dividido</button>
+        <button role="radio" data-view="model" aria-checked="false">3D</button>
+      </div>
+      <div class="cam" role="group" aria-label="Cámara 3D">
+        <button data-cam="iso">Perspectiva</button>
+        <button data-cam="top">Planta</button>
+        <button data-cam="front">Fachada</button>
+      </div>
+    </div>
+    <div class="views" id="views" data-view="split">
+      <figure class="view view-plan">
+        <svg id="planSvg" tabindex="0" role="application" aria-label="Plano editable. Arrastra un ambiente o usa las flechas del teclado para moverlo."></svg>
+        <figcaption>Arrastra un ambiente o muévelo con las flechas. Mayús + flecha avanza un módulo.</figcaption>
+      </figure>
+      <figure class="view view-model">
+        <div id="stage3d" class="stage3d"></div>
+        <figcaption>Arrastra para girar, usa la rueda para acercar y haz clic en un ambiente para seleccionarlo.</figcaption>
+      </figure>
+    </div>
+    <dl class="metrics" id="metrics"></dl>
+  </section>
+
+  <aside class="panel panel-inspector" aria-label="Detalle">
+    <section class="card" id="roomCard" aria-live="polite">
+      <div class="card-head">
+        <h2 id="roomName">Sin selección</h2>
+        <span class="chip" id="roomType"></span>
+      </div>
+      <p class="room-area" id="roomArea"></p>
+      <div class="grid4" id="roomFields">
+        <label class="field"><span>Desde la izquierda</span><span class="unit"><input id="roomX" type="number" step="0.1" inputmode="decimal"><i>m</i></span></label>
+        <label class="field"><span>Desde el frente</span><span class="unit"><input id="roomZ" type="number" step="0.1" inputmode="decimal"><i>m</i></span></label>
+        <label class="field"><span>Ancho</span><span class="unit"><input id="roomW" type="number" step="0.1" inputmode="decimal"><i>m</i></span></label>
+        <label class="field"><span>Fondo</span><span class="unit"><input id="roomD" type="number" step="0.1" inputmode="decimal"><i>m</i></span></label>
+      </div>
+      <label class="switch"><input type="checkbox" id="roomLocked"><span class="track" aria-hidden="true"></span><span>Fijar al generar de nuevo</span></label>
+      <button class="link-btn" id="unlockAll" type="button">Liberar todos</button>
+    </section>
+    <section class="card">
+      <h2>Modelo 3D</h2>
+      <label class="switch"><input type="checkbox" id="optFurniture" checked><span class="track" aria-hidden="true"></span><span>Mobiliario</span></label>
+      <label class="switch"><input type="checkbox" id="optRoof"><span class="track" aria-hidden="true"></span><span>Techo</span></label>
+      <label class="switch"><input type="checkbox" id="optCut"><span class="track" aria-hidden="true"></span><span>Corte a 1,20 m</span></label>
+      <label class="switch"><input type="checkbox" id="optLabels" checked><span class="track" aria-hidden="true"></span><span>Nombres</span></label>
+      <label class="switch"><input type="checkbox" id="optSpin"><span class="track" aria-hidden="true"></span><span>Girar solo</span></label>
+      <label class="range"><span>Despiece <output id="explodeOut">0 %</output></span><input id="optExplode" type="range" min="0" max="100" value="0"></label>
+    </section>
+    <section class="card">
+      <h2>Despiece</h2>
+      <dl class="bill" id="billSummary"></dl>
+      <p class="note">Cantidades conceptuales para estimar. No es un documento de fabricación ni de cálculo estructural.</p>
+    </section>
+  </aside>
+</main>
+
+<dialog id="accountDialog" class="dialog" aria-labelledby="accountTitle">
+  <form method="dialog" class="dialog-close"><button aria-label="Cerrar">×</button></form>
+  <h2 id="accountTitle">Tu cuenta</h2>
+  <p class="dialog-lead" id="accountLead">Guarda tus proyectos y ábrelos desde cualquier equipo.</p>
+  <div class="segmented segmented-full" role="tablist">
+    <button role="tab" id="tabLogin" aria-selected="true">Entrar</button>
+    <button role="tab" id="tabRegister" aria-selected="false">Crear cuenta</button>
+  </div>
+  <form id="accountForm" class="stack" novalidate>
+    <label class="field"><span>Correo</span><input id="loginEmail" type="email" autocomplete="username" required maxlength="254"></label>
+    <label class="field"><span>Contraseña</span><input id="loginPassword" type="password" autocomplete="current-password" required minlength="8" maxlength="200"></label>
+    <p class="form-error" id="accountError" role="alert"></p>
+    <button class="btn btn-primary btn-block" id="accountSubmit" type="submit">Entrar</button>
+  </form>
+</dialog>
+
+<dialog id="projectsDialog" class="dialog dialog-wide" aria-labelledby="projectsTitle">
+  <form method="dialog" class="dialog-close"><button aria-label="Cerrar">×</button></form>
+  <h2 id="projectsTitle">Mis proyectos</h2>
+  <div id="projectsList" class="project-list"></div>
+  <div class="dialog-foot">
+    <label class="btn file-btn">Abrir archivo JSON<input type="file" id="importFile" accept=".json,application/json"></label>
+    <span class="who" id="projectsWho"></span>
+  </div>
+</dialog>
+
+<div class="account-menu" id="accountMenu" hidden>
+  <p id="accountMenuEmail"></p>
+  <button id="logoutBtn">Cerrar sesión</button>
+</div>
+
+<div class="toasts" id="toasts" role="status" aria-live="polite"></div>
+<noscript><p class="noscript">MODUL-AI necesita JavaScript para funcionar.</p></noscript>
+<script type="module" src="./dist/modul-app.mjs"></script>
+</body>
+</html>
