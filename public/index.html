@@ -109,8 +109,30 @@
         <label class="field"><span>Ancho</span><span class="unit"><input id="roomW" type="number" step="0.1" inputmode="decimal"><i>m</i></span></label>
         <label class="field"><span>Fondo</span><span class="unit"><input id="roomD" type="number" step="0.1" inputmode="decimal"><i>m</i></span></label>
       </div>
-      <label class="switch"><input type="checkbox" id="roomLocked"><span class="track" aria-hidden="true"></span><span>Fijar al generar de nuevo</span></label>
+      <label class="switch"><input type="checkbox" id="roomLocked"><span class="track" aria-hidden="true"></span><span id="lockLabel">Fijar al generar de nuevo</span></label>
+      <label class="field"><span>Ventanas del ambiente</span><select id="windowStyle">
+        <option value="default">Original (por defecto)</option>
+        <option value="lattice">Celosía plana de madera</option>
+        <option value="folding">Celosía plegable hacia afuera</option>
+      </select></label>
+      <p class="note">El estilo se aplica a las ventanas exteriores del ambiente seleccionado.</p>
       <button class="link-btn" id="unlockAll" type="button">Liberar todos</button>
+    </section>
+    <section class="card">
+      <h2>Pintar</h2>
+      <label class="field"><span>Color de pintura</span><input type="color" id="paintColor" value="#7d8d68"></label>
+      <label class="switch"><input type="checkbox" id="paintMode"><span class="track" aria-hidden="true"></span><span>Pintar con clic en 3D</span></label>
+      <p class="note">Haz clic en un muro para pintar los muros de ese ambiente, o en su piso para pintarlo. También puedes usar estos botones sobre la selección.</p>
+      <div class="paint-actions">
+        <button class="btn" id="paintWalls">Pintar muros</button>
+        <button class="btn" id="paintFloor">Pintar piso</button>
+        <button class="link-btn" id="resetPaint">Restaurar acabados</button>
+      </div>
+    </section>
+    <section class="card">
+      <h2>Circulación adaptable</h2>
+      <p class="note">Selecciona y mueve el hall como un ambiente. Las conexiones se recalculan al soltar, respetando retícula, límites, reserva y espacios ocupados.</p>
+      <p class="note">Validación conceptual de geometría y acceso. La normativa y accesibilidad requieren revisión profesional.</p>
     </section>
     <section class="card">
       <h2>Modelo 3D</h2>

@@ -353,7 +353,7 @@ export function generateAlternatives(data, {locked = [], seed = 20261027, tries 
   const fixed = locked.filter(r => !isHall(r)).map(r => {
     const t = wanted.get(r.id);
     if (!t) throw Error('El ambiente fijado ya no existe en el programa: ' + r.id);
-    return {id: t.id, name: t.name, type: t.type, x: r.x, z: r.z, w: r.w, d: r.d, locked: true};
+    return {...roomAppearance(r), id: t.id, name: t.name, type: t.type, x: r.x, z: r.z, w: r.w, d: r.d, locked: true};
   });
   if (fixed.length && !validateLayout(input, fixed, {requireAccess: false}).ok) throw Error('Los ambientes fijados se solapan o invaden la reserva.');
   const fixedIds = new Set(fixed.map(r => r.id));
@@ -396,7 +396,14 @@ export function generateAlternatives(data, {locked = [], seed = 20261027, tries 
   return {input, alternatives: out, scoring: 'heurístico conceptual', mode: usedFallback ? 'busqueda' : 'franjas', tries: n};
 }
 
-export function migrateRoom(r) { return {id: String(r.id), name: String(r.name), type: String(r.type || 'other'), x: Number(r.x), z: Number(r.z), w: Number(r.w), d: Number(r.d), locked: !!r.locked}; }
+export const WINDOW_STYLES = ['default', 'lattice', 'folding'];
+export function roomAppearance(r) {
+  const result = {};
+  if (WINDOW_STYLES.includes(r.windowStyle)) result.windowStyle = r.windowStyle;
+  for (const key of ['floorColor', 'wallColor']) if (/^#[0-9a-f]{6}$/i.test(r[key] || '')) result[key] = r[key];
+  return result;
+}
+export function migrateRoom(r) { return {...roomAppearance(r), ...(r.type === 'hall' && r.autoHall === true ? {autoHall: true} : {}), id: String(r.id), name: String(r.name), type: String(r.type || 'other'), x: Number(r.x), z: Number(r.z), w: Number(r.w), d: Number(r.d), locked: !!r.locked}; }
 export function validateProjectState(raw) {
   if (!raw || typeof raw !== 'object') throw Error('El archivo no contiene un proyecto.');
   const input = validateInput(raw.input);
@@ -404,7 +411,8 @@ export function validateProjectState(raw) {
   const alternatives = {};
   for (const a of ALTERNATIVES) {
     alternatives[a] = raw.alternatives[a].map(migrateRoom);
-    if (!alternatives[a].length || alternatives[a].length > 30) throw Error('Número de ambientes fuera de rango.');
+    if (!alternatives[a].length || alternatives[a].filter(r => !isHall(r)).length > 30 || alternatives[a].length > input.cols * input.rows) throw Error('Número de ambientes fuera de rango.');
+    if (new Set(alternatives[a].map(r => r.id)).size !== alternatives[a].length) throw Error('Identificadores de ambientes duplicados.');
     const valid = validateLayout(input, alternatives[a]);
     if (!valid.ok) throw Error('Alternativa ' + a + ': ' + valid.reason);
   }
