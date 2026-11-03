@@ -250,3 +250,9 @@ input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition: none !important; animation: none !important; }
 }
+
+/* Acabados por ambiente */
+.field select { width: 100%; min-height: 38px; padding: 8px; border: 1px solid #cbd2d9; border-radius: 6px; background: #fff; color: #26313c; font: inherit; }
+.field input[type="color"] { width: 100%; height: 38px; padding: 3px; cursor: pointer; }
+.paint-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.plan-hall .plan-hit { cursor: move; }

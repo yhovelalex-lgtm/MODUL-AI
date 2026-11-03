@@ -1,5 +1,6 @@
 // MODUL-AI | Estado del proyecto, historial (deshacer/rehacer) y plano 2D técnico editable.
 import {generateAlternatives, validateLayout, validateInput, validateProjectState, isHall, ALTERNATIVES} from './modul-core.mjs';
+import {adaptCirculation} from './modul-circulation.mjs';
 import {analyzeLayout, wallPieces, thicknessOf} from './modul-plan.mjs';
 
 export const DEMO_SEED = 20261027;
@@ -83,8 +84,8 @@ export function createStudio({svg, onChange, notify}) {
     // Ambientes
     const layer = el('g', {}, content);
     for (const r of rooms()) {
-      const grp = el('g', {'data-id': r.id, class: isHall(r) ? 'plan-hall' : 'plan-room' + (r.locked ? ' is-locked' : '') + (r.id === selected ? ' is-selected' : '')}, layer);
-      el('rect', {x: r.x, y: r.z, width: r.w, height: r.d, fill: ZONE_FILL[r.type] || ZONE_FILL.other}, grp);
+      const grp = el('g', {'data-id': r.id, class: (isHall(r) ? 'plan-hall plan-room' : 'plan-room') + (r.locked ? ' is-locked' : '') + (r.id === selected ? ' is-selected' : '')}, layer);
+      el('rect', {x: r.x, y: r.z, width: r.w, height: r.d, fill: r.floorColor || ZONE_FILL[r.type] || ZONE_FILL.other}, grp);
       if (!isHall(r)) {
         const size = Math.max(0.26, Math.min(0.5, r.w * 0.125, r.d * 0.17));
         upText(grp, r.x + r.w / 2, r.z + r.d / 2 + size * 0.55, r.name, size, {'font-weight': 600});
@@ -95,6 +96,8 @@ export function createStudio({svg, onChange, notify}) {
           el('rect', {x: cx - 0.13, y: cy - 0.02, width: 0.26, height: 0.2, rx: 0.03, fill: INK}, lk);
           el('path', {d: `M${cx - 0.08} ${cy - 0.02} v-0.06 a0.08 0.08 0 0 1 0.16 0 v0.06`, fill: 'none', stroke: INK, 'stroke-width': 0.04}, lk);
         }
+      }
+      {
         const hit = el('rect', {x: r.x, y: r.z, width: r.w, height: r.d, fill: 'transparent', class: 'plan-hit'}, grp);
         hit.addEventListener('pointerdown', ev => startDrag(ev, r));
       }
@@ -156,7 +159,7 @@ export function createStudio({svg, onChange, notify}) {
       if (dx === drag.dx && dz === drag.dz) return;
       drag.dx = dx; drag.dz = dz; drag.moved = drag.moved || dx !== 0 || dz !== 0;
       const next = rooms().map(r => (r.id === room.id ? {...r, x: r.x + dx, z: r.z + dz} : r));
-      const check = validateLayout(input, next);
+      const check = adaptCirculation(input, next.map(r => r.id === room.id && isHall(r) ? {...r, autoHall: false} : r));
       drag.valid = check.ok; drag.reason = check.reason;
       group?.setAttribute('transform', `translate(${dx} ${dz})`);
       group?.classList.toggle('is-invalid', !check.ok);
@@ -179,12 +182,17 @@ export function createStudio({svg, onChange, notify}) {
   }
 
   function updateRoom(id, patch, reason = 'editar') {
-    const next = copy(rooms()), r = next.find(x => x.id === id);
+    let next = copy(rooms());
+    const r = next.find(x => x.id === id);
     if (!r) return false;
     if (r.locked && ('x' in patch || 'z' in patch || 'w' in patch || 'd' in patch)) { notify?.('Libera el ambiente antes de modificarlo.', 'error'); return false; }
+    if (Object.entries(patch).every(([key, value]) => r[key] === value)) return true;
     Object.assign(r, patch);
-    const check = validateLayout(input, next);
+    const geometry = ['x', 'z', 'w', 'd'].some(k => k in patch);
+    if (isHall(r) && (geometry || 'floorColor' in patch || 'wallColor' in patch || 'windowStyle' in patch)) r.autoHall = false;
+    const check = geometry ? adaptCirculation(input, next) : validateLayout(input, next);
     if (!check.ok) { notify?.(check.reason, 'error'); emit('rechazado'); return false; }
+    if (check.rooms) next = check.rooms;
     commit();
     sets[active] = next;
     revision++;
@@ -218,6 +226,10 @@ export function createStudio({svg, onChange, notify}) {
     setActive(v) { if (!ALTERNATIVES.includes(v) || v === active) return; active = v; if (!rooms().some(r => r.id === selected)) selected = rooms().find(r => !isHall(r))?.id || null; emit('alternativa'); },
     select(id) { if (id === selected) return; selected = id; emit('select'); },
     updateRoom: (patch) => selected ? updateRoom(selected, patch) : false,
+    paint(id, surface, color) {
+      if (!['floor', 'wall'].includes(surface) || (color !== null && !/^#[0-9a-f]{6}$/i.test(color))) return false;
+      return updateRoom(id, {[surface + 'Color']: color}, 'pintar');
+    },
     setLocked(flag) { const r = rooms().find(x => x.id === selected); if (!r || !!r.locked === flag) return; commit(); r.locked = flag; revision++; emit('fijar'); },
     unlockAll() { if (!rooms().some(r => r.locked)) return; commit(); for (const r of rooms()) r.locked = false; revision++; emit('liberar'); },
     rename(name) { const n = String(name || '').trim().slice(0, 100); if (!n || n === input.name) return; input.name = n; emit('nombre'); },

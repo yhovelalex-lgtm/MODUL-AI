@@ -49,7 +49,7 @@ const TEX = {
 };
 const FLOOR_OF = {social: ['wood', 1.6], bedroom: ['wood', 1.6], other: ['wood', 1.6], kitchen: ['tile', 1.2], bath: ['tile', 1.2], hall: ['stone', 1.6]};
 
-export function createViewer(container, {onSelect} = {}) {
+export function createViewer(container, {onSelect, onPaint} = {}) {
   const renderer = new THREE.WebGLRenderer({antialias: true, preserveDrawingBuffer: true});
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.shadowMap.enabled = true;
@@ -108,8 +108,9 @@ export function createViewer(container, {onSelect} = {}) {
   const terrain = new THREE.Group(), house = new THREE.Group();
   scene.add(terrain, house);
   let state = {input: null, analysis: null, selected: null};
-  let opts = {roof: false, cut: false, furniture: true, labels: true, explode: 0, spin: false};
+  let opts = {paint: false, roof: false, cut: false, furniture: true, labels: true, explode: 0, spin: false};
   let parts = [], floors = new Map(), tags = new Map(), pickables = [], selectionFrame = null;
+  let wallMaterials = [];
   let plotKey = '', houseKey = '', needsRender = true, tween = null, firstView = true;
 
   // ---------- utilidades de geometría ----------
@@ -312,6 +313,30 @@ export function createViewer(container, {onSelect} = {}) {
       fr(0.05, h, o.center - o.width / 2 + 0.025, y0 + o.sill + h / 2);
       fr(0.05, h, o.center + o.width / 2 - 0.025, y0 + o.sill + h / 2);
       if (o.width > 1.3) fr(0.04, h, o.center, y0 + o.sill + h / 2);
+      const style = state.analysis.rooms[o.room]?.windowStyle || 'default';
+      if (style !== 'default') {
+        // Marco local: x a lo largo del vano; z apunta siempre al exterior.
+        const screen = new THREE.Group(), outside = run.A < 0 ? -1 : 1;
+        place(screen, o.center, y0 + o.sill, outside * (t / 2 + 0.07));
+        if (alongX) screen.rotation.y = outside > 0 ? 0 : Math.PI;
+        else screen.rotation.y = outside > 0 ? Math.PI / 2 : -Math.PI / 2;
+        const panel = (height, bottom, angle = 0, offset = 0) => {
+          const g = new THREE.Group(); screen.add(g); g.position.set(0, bottom, offset); g.rotation.x = angle;
+          const w = o.width, rail = 0.045;
+          for (const x of [-w / 2 + rail / 2, w / 2 - rail / 2]) box(g, rail, height, 0.05, M.wood, x, 0, 0);
+          for (const y of [0, height - rail]) box(g, w, rail, 0.05, M.wood, 0, y, 0);
+          const nx = Math.max(2, Math.ceil(w / 0.09)), ny = Math.max(2, Math.ceil(height / 0.09));
+          for (let i = 1; i < nx; i++) box(g, 0.016, height - rail * 2, 0.022, M.wood, -w / 2 + i * w / nx, rail, 0);
+          for (let j = 1; j < ny; j++) box(g, w - rail * 2, 0.016, 0.022, M.wood, 0, j * height / ny, 0.012);
+        };
+        // En corte se muestra la porción inferior plana, sin piezas sobre el corte.
+        if (style === 'lattice' || opts.cut) panel(h, 0);
+        else {
+          const angle = Math.PI / 5, half = h / (2 * Math.cos(angle));
+          panel(half, 0, angle);
+          panel(half, h / 2, -angle, half * Math.sin(angle));
+        }
+      }
     } else if (o.type === 'door' || o.type === 'entry') {
       const h = Math.min(o.head, H) - 0.02, w = o.width - 0.04;
       if (h <= 0.05) return;
@@ -338,6 +363,7 @@ export function createViewer(container, {onSelect} = {}) {
   // ---------- casa ----------
   function buildHouse() {
     disposeTree(house); house.clear();
+    wallMaterials.forEach(m => m.dispose()); wallMaterials = [];
     for (const f of floors.values()) { f.top.dispose(); f.tex.dispose(); }
     parts = []; floors = new Map(); tags = new Map(); pickables = []; selectionFrame = null;
     const {analysis} = state;
@@ -349,25 +375,36 @@ export function createViewer(container, {onSelect} = {}) {
     for (const r of analysis.rooms) {
       const [kind, scale] = FLOOR_OF[r.type] || FLOOR_OF.other;
       const tex = baseTex[kind].clone(); tex.needsUpdate = true; tex.repeat.set(r.w / scale, r.d / scale);
-      const top = new THREE.MeshStandardMaterial({map: tex, roughness: kind === 'tile' ? 0.45 : 0.75, emissive: C.signal, emissiveIntensity: 0});
+      const top = new THREE.MeshStandardMaterial({color: r.floorColor || '#ffffff', map: r.floorColor ? null : tex, roughness: kind === 'tile' ? 0.45 : 0.75, emissive: C.signal, emissiveIntensity: 0});
       const mesh = new THREE.Mesh(new THREE.BoxGeometry(r.w, y0, r.d), [M.plinth, M.plinth, top, M.plinth, M.plinth, M.plinth]);
-      mesh.userData = {roomId: isHall(r) ? null : r.id, ownMaterial: false};
+      mesh.userData = {roomId: r.id, surface: 'floor', ownMaterial: false};
       top.userData = {};
       mesh.position.set(r.x + r.w / 2, y0 / 2, r.z + r.d / 2);
       mesh.receiveShadow = true;
       house.add(mesh);
       floors.set(r.id, {mesh, top, tex});
-      if (!isHall(r)) pickables.push(mesh);
+      pickables.push(mesh);
       tag(mesh, 'floor', new THREE.Vector3());
     }
 
     for (const run of analysis.runs) {
       const g = new THREE.Group(), t = thicknessOf(run), alongX = run.dir === 'h';
+      const roomA = analysis.rooms[run.A], roomB = analysis.rooms[run.B];
+      const materialFor = r => {
+        if (!r?.wallColor) return M.wall;
+        const material = M.wall.clone(); material.color.set(r.wallColor); wallMaterials.push(material); return material;
+      };
+      const matA = materialFor(roomA || roomB), matB = materialFor(roomB || roomA);
+      // BoxGeometry: +x,-x,+y,-y,+z,-z. Cada cara compartida pertenece a su ambiente.
+      const materials = alongX ? [M.wall, M.wall, M.wall, M.wall, matB, matA] : [matB, matA, M.wall, M.wall, M.wall, M.wall];
       for (const p of wallPieces(run, H)) {
         const len = p.to - p.from, h = p.y1 - p.y0, mid = (p.from + p.to) / 2;
         const lowered = alongX ? 0 : 0.002;
-        const mesh = new THREE.Mesh(new THREE.BoxGeometry(...(alongX ? [len, h - lowered, t] : [t, h - lowered, len])), M.wall);
+        const mesh = new THREE.Mesh(new THREE.BoxGeometry(...(alongX ? [len, h - lowered, t] : [t, h - lowered, len])), materials);
         if (alongX) mesh.position.set(mid, y0 + p.y0 + (h - lowered) / 2, run.c); else mesh.position.set(run.c, y0 + p.y0 + (h - lowered) / 2, mid);
+        mesh.userData = {surface: 'wall', roomId: (roomA || roomB)?.id,
+          faceRooms: alongX ? {4: (roomB || roomA)?.id, 5: (roomA || roomB)?.id} : {0: (roomB || roomA)?.id, 1: (roomA || roomB)?.id}};
+        pickables.push(mesh);
         mesh.castShadow = true; mesh.receiveShadow = true;
         mesh.add(new THREE.LineSegments(new THREE.EdgesGeometry(mesh.geometry), M.edge));
         g.add(mesh);
@@ -495,19 +532,26 @@ export function createViewer(container, {onSelect} = {}) {
     const rect = renderer.domElement.getBoundingClientRect();
     ptr.set(((e.clientX - rect.left) / rect.width) * 2 - 1, -((e.clientY - rect.top) / rect.height) * 2 + 1);
     ray.setFromCamera(ptr, camera);
-    return ray.intersectObjects(pickables.filter(o => o.visible), false).find(h => h.object.userData.roomId)?.object.userData.roomId || null;
+    const hit = ray.intersectObjects(pickables.filter(o => o.visible), false)[0];
+    if (!hit) return null;
+    const data = hit.object.userData;
+    return {id: data.faceRooms?.[hit.face.materialIndex] || data.roomId, surface: data.surface};
   };
   renderer.domElement.addEventListener('pointerdown', e => { down = {x: e.clientX, y: e.clientY}; });
   renderer.domElement.addEventListener('pointerup', e => {
-    if (!down || Math.hypot(e.clientX - down.x, e.clientY - down.y) > 5) return;
-    const id = pick(e);
-    if (id) onSelect?.(id);
+    const start = down; down = null;
+    if (!start || Math.hypot(e.clientX - start.x, e.clientY - start.y) > 5) return;
+    const hit = pick(e);
+    if (hit?.id) {
+      if (opts.paint && hit.surface) onPaint?.(hit.id, hit.surface);
+      else onSelect?.(hit.id);
+    }
   });
   let hoverAt = 0;
   renderer.domElement.addEventListener('pointermove', e => {
     if (e.buttons || performance.now() - hoverAt < 60) return;
     hoverAt = performance.now();
-    renderer.domElement.style.cursor = pick(e) ? 'pointer' : 'grab';
+    renderer.domElement.style.cursor = pick(e) ? (opts.paint ? 'crosshair' : 'pointer') : 'grab';
   });
   controls.addEventListener('change', () => { needsRender = true; });
 
@@ -551,7 +595,7 @@ export function createViewer(container, {onSelect} = {}) {
   return {
     update(input, analysis, selected) {
       const pk = [input.width, input.depth, input.module].join('|');
-      const hk = JSON.stringify(analysis.rooms.map(r => [r.id, r.x, r.z, r.w, r.d])) + pk;
+      const hk = JSON.stringify(analysis.rooms.map(r => [r.id, r.name, r.type, r.x, r.z, r.w, r.d, r.windowStyle, r.floorColor, r.wallColor])) + pk;
       state = {input, analysis, selected};
       const plotChanged = pk !== plotKey;
       if (plotChanged) { plotKey = pk; buildTerrain(input); }

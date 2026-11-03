@@ -10,7 +10,7 @@
   "scripts": {
     "start": "node --no-warnings=ExperimentalWarning server/server.mjs",
     "open": "node --no-warnings=ExperimentalWarning server/server.mjs --open",
-    "check": "node --check server/server.mjs && node --check public/dist/modul-core.mjs && node --check public/dist/modul-studio.mjs && node --check public/dist/modul-api.mjs",
+    "check": "node --check server/server.mjs && node --check public/dist/modul-core.mjs && node --check public/dist/modul-studio.mjs && node --check public/dist/modul-api.mjs && node --check public/dist/modul-app.mjs && node --check public/dist/modul-3d.mjs && node --check public/dist/modul-plan.mjs && node --check public/dist/modul-circulation.mjs",
     "test": "node --no-warnings=ExperimentalWarning --test tests/*.test.mjs",
     "exe": "npx --yes bun@1.2.23 build --compile --minify --target=bun-windows-x64 server/server.mjs --outfile MODUL-AI.exe",
     "exe:linux": "npx --yes bun@1.2.23 build --compile --minify --target=bun-linux-x64 server/server.mjs --outfile modul-ai-linux",
